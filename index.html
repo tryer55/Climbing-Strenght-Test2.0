@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kletterkraft Analyse & Benchmark</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js für das Spinnennetz-Diagramm -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Font Awesome für Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        .card {
+            background-color: #1e293b; /* Slate 800 */
+            transition: all 0.3s ease;
+        }
+        .card:focus-within {
+            ring: 2px;
+            border-color: #22c55e;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button, 
+        input[type="number"]::-webkit-inner-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        .range-indicator {
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%);
+            border-radius: 2px;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-4">
+                <i class="fa-solid fa-mountain text-green-400 mr-3"></i>Kletterkraft Analyse
+            </h1>
+            <p class="text-slate-400 text-lg">Gib deine Werte ein. Erkenne deine Schwächen. Zerstöre dein Plateau.</p>
+        </header>
+
+        <!-- Main Input: Bodyweight -->
+        <div class="bg-slate-800 p-6 rounded-2xl shadow-lg mb-8 border border-slate-700 flex flex-col md:flex-row items-center justify-center gap-6">
+            <label class="text-xl font-semibold text-slate-200">
+                <i class="fa-solid fa-weight-scale mr-2"></i>Dein Körpergewicht (kg):
+            </label>
+            <input type="number" id="bodyweight" class="bg-slate-900 border border-slate-600 text-white text-2xl rounded-lg p-3 w-32 text-center focus:ring-2 focus:ring-green-500 focus:outline-none placeholder-slate-600" placeholder="70" onchange="calculateAll()">
+        </div>
+
+        <!-- The 6 Tests Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+
+            <!-- 1. Fingerkraft -->
+            <div class="card p-6 rounded-xl border border-slate-700 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+                    <i class="fa-solid fa-hand-fist text-6xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-green-400 mb-2">1. Fingerkraft (Max)</h3>
+                <p class="text-sm text-slate-400 mb-4">20mm Leiste, 5s Halten, 2 Hände.</p>
+                
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-slate-300">Zusatzgewicht (kg)</label>
+                    <input type="number" id="fingerInput" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" placeholder="0" oninput="calculateAll()">
+                </div>
+                <div class="text-xs text-slate-500 flex justify-between">
+                    <!-- Updated Target Label -->
+                    <span>Target: 220% KG (Gesamt)</span>
+                    <span id="fingerRes" class="font-mono text-blue-400">Wait...</span>
+                </div>
+                <div class="range-indicator"></div>
+            </div>
+
+            <!-- 2. Dead Hang -->
+            <div class="card p-6 rounded-xl border border-slate-700 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+                    <i class="fa-solid fa-clock text-6xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-green-400 mb-2">2. Dead Hang (Ausdauer)</h3>
+                <p class="text-sm text-slate-400 mb-4">Stange, aktiver Hang, Zeit bis Abbruch.</p>
+                
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-slate-300">Zeit (Sekunden)</label>
+                    <input type="number" id="hangInput" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" placeholder="120" oninput="calculateAll()">
+                    <p class="text-xs text-slate-500 mt-1">z.B. 3:30 min = 210 sek</p>
+                </div>
+                <div class="text-xs text-slate-500 flex justify-between">
+                    <span>Target: 300 sek (5min)</span>
+                    <span id="hangRes" class="font-mono text-blue-400">Wait...</span>
+                </div>
+                <div class="range-indicator"></div>
+            </div>
+
+            <!-- 3. Schulter -->
+            <div class="card p-6 rounded-xl border border-slate-700 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+                    <i class="fa-solid fa-dumbbell text-6xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-green-400 mb-2">3. Schulter (Press)</h3>
+                <p class="text-sm text-slate-400 mb-4">Einarmiges Drücken (OHP), 1 saubere Rep.</p>
+                
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-slate-300">Hantelgewicht (kg)</label>
+                    <input type="number" id="shoulderInput" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" placeholder="20" oninput="calculateAll()">
+                </div>
+                <div class="text-xs text-slate-500 flex justify-between">
+                    <span>Target: 40% KG</span>
+                    <span id="shoulderRes" class="font-mono text-blue-400">Wait...</span>
+                </div>
+                <div class="range-indicator"></div>
+            </div>
+
+            <!-- 4. Pull (Weighted) -->
+            <div class="card p-6 rounded-xl border border-slate-700 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+                    <i class="fa-solid fa-person-arrow-up-from-line text-6xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-green-400 mb-2">4. Pull (2RM)</h3>
+                <p class="text-sm text-slate-400 mb-4">Klimmzug mit Gewicht, 2 saubere Reps.</p>
+                
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-slate-300">Zusatzgewicht (kg)</label>
+                    <input type="number" id="pullInput" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" placeholder="30" oninput="calculateAll()">
+                </div>
+                <div class="text-xs text-slate-500 flex justify-between">
+                    <span>Target: 70% KG</span>
+                    <span id="pullRes" class="font-mono text-blue-400">Wait...</span>
+                </div>
+                <div class="range-indicator"></div>
+            </div>
+
+            <!-- 5. Push (Push-ups) -->
+            <div class="card p-6 rounded-xl border border-slate-700 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+                    <i class="fa-solid fa-person-praying text-6xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-green-400 mb-2">5. Push (Max)</h3>
+                <p class="text-sm text-slate-400 mb-4">Liegestütze, saubere Form, Max Reps.</p>
+                
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-slate-300">Anzahl Wiederholungen</label>
+                    <input type="number" id="pushInput" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" placeholder="40" oninput="calculateAll()">
+                </div>
+                <div class="text-xs text-slate-500 flex justify-between">
+                    <span>Target: 65 Reps</span>
+                    <span id="pushRes" class="font-mono text-blue-400">Wait...</span>
+                </div>
+                <div class="range-indicator"></div>
+            </div>
+
+            <!-- 6. Core -->
+            <div class="card p-6 rounded-xl border border-slate-700 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+                    <i class="fa-solid fa-child-reaching text-6xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-green-400 mb-2">6. Core (Hollow Body)</h3>
+                <p class="text-sm text-slate-400 mb-4">Schiffchen halten, unterer Rücken am Boden.</p>
+                
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-slate-300">Zeit (Sekunden)</label>
+                    <input type="number" id="coreInput" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" placeholder="60" oninput="calculateAll()">
+                </div>
+                <div class="text-xs text-slate-500 flex justify-between">
+                    <span>Target: 90 sek</span>
+                    <span id="coreRes" class="font-mono text-blue-400">Wait...</span>
+                </div>
+                <div class="range-indicator"></div>
+            </div>
+
+        </div>
+
+        <!-- Button -->
+        <div class="text-center mb-12">
+            <button onclick="calculateAll(true)" class="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-400 hover:to-blue-500 text-white font-bold py-4 px-10 rounded-full shadow-lg transform transition hover:scale-105 text-xl">
+                <i class="fa-solid fa-spider mr-2"></i> Analyse generieren
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-8 items-start animate-fade-in-up">
+            
+            <!-- Chart Container -->
+            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-xl flex justify-center items-center relative min-h-[400px]">
+                <canvas id="spiderChart"></canvas>
+            </div>
+
+            <!-- Text Analysis -->
+            <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl">
+                <h2 class="text-2xl font-bold text-white mb-6 border-b border-slate-600 pb-2">Dein Profil</h2>
+                
+                <div id="analysisContent" class="space-y-4">
+                    <!-- Dynamic Content goes here -->
+                </div>
+
+                <div class="mt-6 bg-slate-900 p-4 rounded-lg border-l-4 border-yellow-500">
+                    <h4 class="text-yellow-400 font-bold mb-1"><i class="fa-solid fa-lightbulb mr-2"></i> Fokus Empfehlung</h4>
+                    <p id="focusRecommendation" class="text-slate-300 text-sm">Bitte Werte eingeben.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let myChart = null;
+
+        // Constants derived from user request
+        const BENCHMARKS = {
+            finger: { min: 0, max: 1.20 }, // 0% added to +120% added (Total 220%)
+            hang: { min: 120, max: 300 },  // 2 min to 5 min
+            shoulder: { min: 0.25, max: 0.40 }, // 25% BW to 40% BW
+            pull: { min: 0.40, max: 0.70 }, // 40% added to 70% added
+            push: { min: 25, max: 65 },    // Reps
+            core: { min: 30, max: 90 }     // Seconds (Estimated standard)
+        };
+
+        function normalizeScore(value, min, max) {
+            if (value <= min) return 20; // Base score for weak but participating
+            if (value >= max) return 100;
+            // Linear interpolation between min and max
+            return 20 + ((value - min) / (max - min)) * 80;
+        }
+
+        function getLevelColor(score) {
+            if (score >= 90) return "text-blue-400 font-bold";
+            if (score >= 70) return "text-green-400 font-bold";
+            if (score >= 40) return "text-yellow-400 font-bold";
+            return "text-red-400 font-bold";
+        }
+
+        function getLevelName(score) {
+            if (score >= 90) return "Sehr Stark (Elite)";
+            if (score >= 70) return "Stark";
+            if (score >= 40) return "Mittel";
+            return "Schwach";
+        }
+
+        function calculateAll(scrollToResult = false) {
+            const bw = parseFloat(document.getElementById('bodyweight').value);
+            
+            if (!bw || bw <= 0) {
+                if(scrollToResult) alert("Bitte gib zuerst dein Körpergewicht ein!");
+                return;
+            }
+
+            // Get Inputs
+            const fingerAdd = parseFloat(document.getElementById('fingerInput').value) || 0;
+            const hangTime = parseFloat(document.getElementById('hangInput').value) || 0;
+            const shoulderKg = parseFloat(document.getElementById('shoulderInput').value) || 0;
+            const pullAdd = parseFloat(document.getElementById('pullInput').value) || 0;
+            const pushReps = parseFloat(document.getElementById('pushInput').value) || 0;
+            const coreTime = parseFloat(document.getElementById('coreInput').value) || 0;
+
+            // Calculate Metrics
+            const fingerMetric = fingerAdd / bw; // % Added
+            const shoulderMetric = shoulderKg / bw; // % BW
+            const pullMetric = pullAdd / bw; // % Added
+
+            // Update UI Previews (Mini displays on cards)
+            // Changed Finger display to show Total Load % to match target
+            document.getElementById('fingerRes').innerText = `${((1 + fingerMetric)*100).toFixed(1)}% KG`;
+            
+            document.getElementById('hangRes').innerText = `${Math.floor(hangTime/60)}:${(hangTime%60).toString().padStart(2,'0')} min`;
+            document.getElementById('shoulderRes').innerText = `${(shoulderMetric*100).toFixed(1)}% BW`;
+            document.getElementById('pullRes').innerText = `+${(pullMetric*100).toFixed(1)}% BW`;
+            document.getElementById('pushRes').innerText = `${pushReps} Reps`;
+            document.getElementById('coreRes').innerText = `${coreTime} sec`;
+
+            // Normalize Scores (0-100 Scale)
+            const scores = {
+                finger: normalizeScore(fingerMetric, BENCHMARKS.finger.min, BENCHMARKS.finger.max),
+                hang: normalizeScore(hangTime, BENCHMARKS.hang.min, BENCHMARKS.hang.max),
+                shoulder: normalizeScore(shoulderMetric, BENCHMARKS.shoulder.min, BENCHMARKS.shoulder.max),
+                pull: normalizeScore(pullMetric, BENCHMARKS.pull.min, BENCHMARKS.pull.max),
+                push: normalizeScore(pushReps, BENCHMARKS.push.min, BENCHMARKS.push.max),
+                core: normalizeScore(coreTime, BENCHMARKS.core.min, BENCHMARKS.core.max)
+            };
+
+            updateChart(scores);
+            generateAnalysis(scores);
+
+            if (scrollToResult) {
+                document.getElementById('resultsSection').classList.remove('hidden');
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function generateAnalysis(scores) {
+            const container = document.getElementById('analysisContent');
+            const recContainer = document.getElementById('focusRecommendation');
+            
+            // Build Breakdown List
+            let html = `<ul class="space-y-2 text-sm">`;
+            const labels = {
+                finger: "Fingerkraft", hang: "Hängen (Ausdauer)", shoulder: "Schulter (Press)", 
+                pull: "Zugkraft (Pull-Ups)", push: "Push (Antagonist)", core: "Körperspannung"
+            };
+
+            for (const [key, val] of Object.entries(scores)) {
+                html += `<li class="flex justify-between items-center border-b border-slate-700 pb-1">
+                            <span>${labels[key]}</span>
+                            <span class="${getLevelColor(val)}">${getLevelName(val)} (${Math.round(val)}%)</span>
+                         </li>`;
+            }
+            html += `</ul>`;
+            container.innerHTML = html;
+
+            // Logic Engine for Recommendation
+            let recText = "";
+            let issues = [];
+
+            // 1. Antagonist check (Safety First)
+            if (scores.push < 40 || scores.shoulder < 40) {
+                issues.push("⚠️ <b>Verletzungsrisiko hoch!</b> Deine Push-Muskulatur (Schulter/Brust) ist zu schwach für deine Zugmuskeln. Priorität: Antagonisten trainieren.");
+            }
+
+            // 2. Power Transfer Check (Finger vs Pull)
+            // If Pull is significantly stronger than Finger (e.g., Pull 80, Finger 40)
+            if (scores.pull > scores.finger + 15) {
+                issues.push("🛑 <b>Kraft kommt nicht an:</b> Dein Rücken ist stark, aber deine Finger sind das Limit. Du kannst die Kraft nicht auf kleine Griffe bringen. Fokus: Hangboard.");
+            } 
+            // If Finger is significantly stronger than Pull (Rare, but possible)
+            else if (scores.finger > scores.pull + 15) {
+                issues.push("💪 <b>Campus-Potenzial:</b> Deine Finger sind Stahl, aber dir fehlt die große Zugkraft. Fokus: Weighted Pull-Ups.");
+            }
+
+            // 3. Core Check
+            if (scores.core < scores.finger) {
+                issues.push("🧱 <b>Spannungsverlust:</b> Deine Finger halten, aber dein Körper sackt ab. Du verlierst Kraft in Überhängen. Fokus: Core strenger trainieren.");
+            }
+
+            // 4. Endurance Check
+            if (scores.hang < 40 && scores.finger > 60) {
+                 issues.push("🔋 <b>Pumper-Alarm:</b> Du hast Maxkraft, aber keine Ausdauer. Du wirst schnell 'zu' machen.");
+            }
+
+            // 5. All Green?
+            if (issues.length === 0) {
+                if (Object.values(scores).every(s => s > 70)) {
+                    recText = "🔥 <b>Performance Modus:</b> Alles im grünen Bereich. Fokus auf Technik, Projekte am Fels und mentale Stärke.";
+                } else {
+                    recText = "⚙️ <b>Ausgewogen:</b> Keine massiven Dysbalancen, aber überall Raum für Verbesserung. Arbeite am schwächsten Glied.";
+                }
+            } else {
+                recText = issues.join("<br><br>");
+            }
+
+            recContainer.innerHTML = recText;
+        }
+
+        function updateChart(scores) {
+            const ctx = document.getElementById('spiderChart').getContext('2d');
+            
+            const dataValues = [
+                scores.finger, 
+                scores.hang, 
+                scores.shoulder, 
+                scores.pull, 
+                scores.push, 
+                scores.core
+            ];
+
+            if (myChart) {
+                myChart.data.datasets[0].data = dataValues;
+                myChart.update();
+            } else {
+                myChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Finger', 'Hängen', 'Schulter', 'Pull', 'Push', 'Core'],
+                        datasets: [{
+                            label: 'Kletter-Score (0-100)',
+                            data: dataValues,
+                            backgroundColor: 'rgba(34, 197, 94, 0.2)', // Green transparency
+                            borderColor: '#22c55e', // Green solid
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#22c55e',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#22c55e',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            r: {
+                                angleLines: { color: '#334155' }, // Slate 700
+                                grid: { color: '#334155' },
+                                pointLabels: {
+                                    color: '#94a3b8', // Slate 400
+                                    font: { size: 12, weight: 'bold' }
+                                },
+                                ticks: {
+                                    display: false, // Hide numbers on axis
+                                    backdropColor: 'transparent'
+                                },
+                                min: 0,
+                                max: 100
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
